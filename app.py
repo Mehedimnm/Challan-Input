@@ -206,7 +206,7 @@ HTML_TEMPLATE = """
 
 # --- BACKEND LOGIC ---
 def process_data(user_input, client_ua):
-    base_url = "http://180.92.235.190:8022/"
+    base_url = "http://180.92.235.190:8022/erp"
     
     # User-Agent comes from Client
     headers_common = {
@@ -390,3 +390,4 @@ def process():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
+
