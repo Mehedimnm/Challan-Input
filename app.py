@@ -206,13 +206,13 @@ HTML_TEMPLATE = """
 
 # --- BACKEND LOGIC ---
 def process_data(user_input, client_ua):
-    base_url = "http://103.231.177.24:8022/erp"
+    base_url = "http://180.92.235.190:8022/"
     
     # User-Agent comes from Client
     headers_common = {
         'User-Agent': client_ua if client_ua else 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36',
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Origin': 'http://103.231.177.24:8022/',
+        'Origin': 'http://180.92.235.190:8022/',
         'Referer': f"{base_url}/login.php"
     }
 
@@ -390,5 +390,3 @@ def process():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
-
-
