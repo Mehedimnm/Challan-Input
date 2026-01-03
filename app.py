@@ -236,7 +236,7 @@ def process_data(user_input, client_ua):
         # 3. Logic Setup
         cbo_logic = '1'
         if user_input.startswith('61'): cbo_logic = '4'
-        elif user_input.startswith('1'): cbo_logic = '2'
+        elif user_input.startswith('13'): cbo_logic = '2'
 
         ctrl_url = f"{base_url}/production/requires/bundle_wise_cutting_delevar_to_input_controller.php"
         headers_ajax = headers_common.copy()
@@ -390,6 +390,7 @@ def process():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
+
 
 
 
