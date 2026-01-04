@@ -9,7 +9,7 @@ from urllib3.util.retry import Retry
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- MNM SOFTWARE DESIGN (Updated with Company Selection) ---
+# --- MNM SOFTWARE DESIGN (Updated Colors & Order) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -17,7 +17,7 @@ HTML_TEMPLATE = """
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sewing Input Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     
     <style>
@@ -26,15 +26,16 @@ HTML_TEMPLATE = """
             --bg-card: #16161f;
             --text-primary: #FFFFFF;
             --text-secondary: #8b8b9e;
-            --accent-orange: #FF7A00;
-            --accent-orange-glow: rgba(255, 122, 0, 0.3);
-            --accent-purple: #8B5CF6;
-            --accent-green: #10B981;
-            --accent-red: #EF4444;
+            
+            /* --- COLOR PALETTE --- */
+            --col-orange: #FF7A00;
+            --col-blue: #06b6d4;
+            --col-purple: #8B5CF6;
+            --col-green: #10B981;
+            
             --border-color: rgba(255, 255, 255, 0.08);
-            --gradient-orange: linear-gradient(135deg, #FF7A00 0%, #FF9A40 100%);
             --gradient-card: linear-gradient(145deg, rgba(22, 22, 31, 0.9) 0%, rgba(16, 16, 22, 0.95) 100%);
-            --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         body {
@@ -45,9 +46,9 @@ HTML_TEMPLATE = """
             position: fixed; border-radius: 50%; filter: blur(80px); opacity: 0.4;
             animation: orbFloat 20s ease-in-out infinite; pointer-events: none; z-index: 0;
         }
-        .orb-1 { width: 300px; height: 300px; background: var(--accent-orange); top: -100px; left: -100px; }
-        .orb-2 { width: 250px; height: 250px; background: var(--accent-purple); bottom: -50px; right: -50px; animation-delay: -5s; }
-        .orb-3 { width: 150px; height: 150px; background: var(--accent-green); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
+        .orb-1 { width: 300px; height: 300px; background: var(--col-orange); top: -100px; left: -100px; }
+        .orb-2 { width: 250px; height: 250px; background: var(--col-purple); bottom: -50px; right: -50px; animation-delay: -5s; }
+        .orb-3 { width: 150px; height: 150px; background: var(--col-green); top: 50%; left: 50%; transform: translate(-50%, -50%); animation-delay: -10s; }
         @keyframes orbFloat {
             0%, 100% { transform: translate(0, 0) scale(1); }
             50% { transform: translate(-20px, 20px) scale(0.95); }
@@ -55,65 +56,99 @@ HTML_TEMPLATE = """
         .main-container { position: relative; z-index: 10; width: 100%; max-width: 440px; padding: 20px; }
         .glass-card {
             background: var(--gradient-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 40px 35px;
-            backdrop-filter: blur(20px); box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5), 0 0 60px var(--accent-orange-glow);
+            backdrop-filter: blur(20px); box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
             animation: cardAppear 0.8s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden;
         }
         @keyframes cardAppear { from { opacity: 0; transform: translateY(30px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        .brand-section { text-align: center; margin-bottom: 35px; }
+        .brand-section { text-align: center; margin-bottom: 30px; }
         .brand-icon {
-            width: 70px; height: 70px; background: var(--gradient-orange); border-radius: 18px;
-            display: inline-flex; align-items: center; justify-content: center; font-size: 32px; color: white;
-            margin-bottom: 18px; box-shadow: 0 15px 40px var(--accent-orange-glow); animation: iconPulse 3s ease-in-out infinite;
+            width: 60px; height: 60px; background: linear-gradient(135deg, #FF7A00 0%, #FF9A40 100%); border-radius: 16px;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 28px; color: white;
+            margin-bottom: 15px; box-shadow: 0 10px 30px rgba(255, 122, 0, 0.3);
         }
-        @keyframes iconPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        .brand-title { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
-        .brand-title span { background: var(--gradient-orange); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .brand-subtitle { color: var(--text-secondary); font-size: 11px; letter-spacing: 2px; margin-top: 6px; font-weight: 600; text-transform: uppercase; }
+        .brand-title { font-size: 24px; font-weight: 900; letter-spacing: -0.5px; }
+        .brand-title span { color: var(--col-orange); }
         
         .form-control-custom {
             width: 100%; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
-            border-radius: 16px; color: white; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: 2px;
-            outline: none; transition: var(--transition-smooth); margin-bottom: 20px;
+            border-radius: 16px; color: white; font-size: 16px; font-weight: 700; text-align: center; letter-spacing: 2px;
+            outline: none; transition: var(--transition-smooth); margin-bottom: 25px;
         }
-        .form-control-custom:focus { border-color: var(--accent-orange); background: rgba(255, 122, 0, 0.05); box-shadow: 0 0 0 4px var(--accent-orange-glow); }
+        .form-control-custom:focus { border-color: var(--col-orange); background: rgba(255, 122, 0, 0.05); box-shadow: 0 0 0 4px rgba(255, 122, 0, 0.2); }
         
-        /* --- NEW COMPANY SELECTOR STYLES --- */
+        /* --- NEW STYLISH SELECTOR --- */
         .company-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 30px;
         }
-        .company-option {
-            position: relative;
-        }
-        .company-option input {
-            position: absolute; opacity: 0; cursor: pointer;
-        }
+        .company-option { position: relative; height: 55px; }
+        .company-option input { position: absolute; opacity: 0; cursor: pointer; height: 0; width: 0; }
+        
         .company-label {
-            display: flex; align-items: center; justify-content: center; padding: 12px 5px;
+            display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
-            border-radius: 12px; font-size: 10px; font-weight: 600; text-align: center;
-            color: var(--text-secondary); cursor: pointer; transition: var(--transition-smooth);
-            text-transform: uppercase; height: 100%;
-        }
-        .company-option input:checked + .company-label {
-            background: rgba(255, 122, 0, 0.15); border-color: var(--accent-orange);
-            color: white; box-shadow: 0 0 15px rgba(255, 122, 0, 0.2);
-        }
-        .company-option input:hover + .company-label {
-            border-color: rgba(255, 255, 255, 0.3);
+            border-radius: 14px; 
+            
+            /* Font Change as requested */
+            font-family: 'JetBrains Mono', monospace; 
+            font-size: 11px; font-weight: 700; text-align: center;
+            color: var(--text-secondary); cursor: pointer; transition: all 0.3s ease;
+            text-transform: uppercase; letter-spacing: -0.5px;
         }
 
+        /* --- INDIVIDUAL COLORS & SHADOWS --- */
+        
+        /* 1. Cotton Clothing (Orange) */
+        #comp2:checked + .company-label {
+            border-color: var(--col-orange);
+            background: rgba(255, 122, 0, 0.1);
+            color: var(--col-orange);
+            box-shadow: 0 0 20px rgba(255, 122, 0, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* 2. Cotton Club (Blue) */
+        #comp1:checked + .company-label {
+            border-color: var(--col-blue);
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--col-blue);
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* 3. Cotton Clout (Purple) */
+        #comp4:checked + .company-label {
+            border-color: var(--col-purple);
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--col-purple);
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* 4. Tropical Knitex (Green) */
+        #comp3:checked + .company-label {
+            border-color: var(--col-green);
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--col-green);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+            transform: translateY(-2px);
+        }
+
+        /* Hover Effect */
+        .company-label:hover { background: rgba(255, 255, 255, 0.06); }
+
+
         .btn-action {
-            width: 100%; padding: 16px; background: var(--gradient-orange); color: white; border: none; border-radius: 16px;
+            width: 100%; padding: 16px; background: linear-gradient(135deg, #FF7A00 0%, #FF9A40 100%); color: white; border: none; border-radius: 16px;
             font-weight: 700; font-size: 16px; cursor: pointer; transition: var(--transition-smooth); letter-spacing: 1px; text-transform: uppercase;
         }
-        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 10px 30px var(--accent-orange-glow); }
+        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(255, 122, 0, 0.3); }
         
         .result-box { display: none; margin-top: 30px; animation: slideUp 0.5s ease-out; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .info-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px; }
         .challan-text { font-size: 22px; font-weight: 800; color: white; margin-bottom: 5px; }
         .sys-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
-        .status-icon-success { font-size: 40px; color: var(--accent-green); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4)); }
+        .status-icon-success { font-size: 40px; color: var(--col-green); margin-bottom: 15px; filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.4)); }
         .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         .btn-outline {
             background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); color: var(--text-secondary);
@@ -130,12 +165,12 @@ HTML_TEMPLATE = """
             z-index: 100; flex-direction: column; justify-content: center; align-items: center; backdrop-filter: blur(5px); border-radius: 24px;
         }
         .spinner {
-            width: 50px; height: 50px; border: 4px solid rgba(255, 122, 0, 0.1); border-top: 4px solid var(--accent-orange);
-            border-right: 4px solid var(--accent-orange); border-radius: 50%; animation: spin 0.8s linear infinite; box-shadow: 0 0 20px var(--accent-orange-glow);
+            width: 50px; height: 50px; border: 4px solid rgba(255, 122, 0, 0.1); border-top: 4px solid var(--col-orange);
+            border-right: 4px solid var(--col-orange); border-radius: 50%; animation: spin 0.8s linear infinite; box-shadow: 0 0 20px rgba(255, 122, 0, 0.4);
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .footer-credit { text-align: center; margin-top: 30px; color: var(--text-secondary); font-size: 11px; opacity: 0.6; font-weight: 500; letter-spacing: 0.5px; }
-        .dev-name { color: var(--accent-orange); font-weight: 700; text-transform: uppercase; }
+        .dev-name { color: var(--col-orange); font-weight: 700; text-transform: uppercase; }
     </style>
 </head>
 <body>
@@ -144,7 +179,7 @@ HTML_TEMPLATE = """
         <div class="glass-card">
             <div id="loading-overlay">
                 <div class="spinner"></div>
-                <div style="margin-top: 15px; font-weight: 600; color: var(--accent-orange); letter-spacing: 1px;">PROCESSING...</div>
+                <div style="margin-top: 15px; font-weight: 600; color: var(--col-orange); letter-spacing: 1px;">PROCESSING...</div>
             </div>
             <div class="brand-section">
                 <div class="brand-icon"><i class="fa-solid fa-layer-group"></i></div>
@@ -158,17 +193,20 @@ HTML_TEMPLATE = """
 
                 <div class="company-grid">
                     <div class="company-option">
-                        <input type="radio" name="company" id="comp1" value="1">
-                        <label for="comp1" class="company-label">Cotton Club BD</label>
-                    </div>
-                    <div class="company-option">
                         <input type="radio" name="company" id="comp2" value="2" checked>
                         <label for="comp2" class="company-label">Cotton Clothing</label>
                     </div>
+
+                    <div class="company-option">
+                        <input type="radio" name="company" id="comp1" value="1">
+                        <label for="comp1" class="company-label">Cotton Club BD</label>
+                    </div>
+
                     <div class="company-option">
                         <input type="radio" name="company" id="comp4" value="4">
                         <label for="comp4" class="company-label">Cotton Clout BD</label>
                     </div>
+
                     <div class="company-option">
                         <input type="radio" name="company" id="comp3" value="3">
                         <label for="comp3" class="company-label">Tropical Knitex</label>
@@ -208,17 +246,10 @@ HTML_TEMPLATE = """
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const val = input.value;
-            // Get selected company
             const companyEl = document.querySelector('input[name="company"]:checked');
             
-            if(!val) {
-                alert("Please Enter Challan No");
-                return;
-            }
-            if(!companyEl) {
-                alert("Please Select a Company");
-                return;
-            }
+            if(!val) { alert("Please Enter Challan No"); return; }
+            if(!companyEl) { alert("Please Select a Company"); return; }
 
             const companyId = companyEl.value;
             input.blur(); 
@@ -230,10 +261,7 @@ HTML_TEMPLATE = """
                 const req = await fetch('/process', {
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({
-                        challan: val,
-                        company_id: companyId  // Sending the selected ID
-                    })
+                    body: JSON.stringify({ challan: val, company_id: companyId })
                 });
                 const res = await req.json();
                 loader.style.display = 'none';
@@ -270,7 +298,6 @@ HTML_TEMPLATE = """
 def process_data(user_input, client_ua, company_id):
     base_url = "http://180.92.235.190:8022/erp"
     
-    # User-Agent comes from Client
     headers_common = {
         'User-Agent': client_ua if client_ua else 'Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Mobile Safari/537.36',
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -295,8 +322,8 @@ def process_data(user_input, client_ua, company_id):
             session.get(f"{base_url}/includes/common_functions_for_js.php?data=724_7_406&action=create_menu_session", headers=headers_menu)
         except: pass
 
-        # 3. Logic Setup (UPDATED: Direct Assignment from Frontend)
-        cbo_logic = str(company_id) # Using the manually selected company ID
+        # 3. Logic Setup (Direct Assignment)
+        cbo_logic = str(company_id) 
         
         ctrl_url = f"{base_url}/production/requires/bundle_wise_cutting_delevar_to_input_controller.php"
         headers_ajax = headers_common.copy()
@@ -311,14 +338,10 @@ def process_data(user_input, client_ua, company_id):
 
         res_pop = session.post(ctrl_url, params={'data': sys_id, 'action': 'populate_data_from_challan_popup'}, data={'rndval': int(time.time()*1000)}, headers=headers_common)
         
-        # 🔴 🔴 SUPER STRICT EXTRACTOR 🔴 🔴
         def get_val(id_name, text):
             pattern = re.escape(id_name) + r".*?\.val\(\s*['\"]?([^'\")]+)['\"]?\s*\)"
             m = re.search(pattern, text)
-            if m:
-                val = m.group(1).strip()
-                return val if val else '0' 
-            return '0' 
+            return m.group(1).strip() if m else '0'
 
         source = get_val("cbo_source", res_pop.text)
         emb_company = get_val("cbo_emb_company", res_pop.text)
@@ -366,7 +389,7 @@ def process_data(user_input, client_ua, company_id):
                 'isRescan': get_row_val(r"name=\"isRescan\[\]\".*?value=\"(\d+)\"", r)
             })
 
-        # 5. Save Payload (UTC+6 Bangladesh Time)
+        # 5. Save Payload
         bd_zone = timezone(timedelta(hours=6))
         now_bd = datetime.now(bd_zone)
         fmt_date = now_bd.strftime("%d-%b-%Y")
@@ -432,7 +455,6 @@ def process():
     if not data or 'challan' not in data or 'company_id' not in data:
         return jsonify({"status": "error", "message": "Missing Data"})
     
-    # Capture Dynamic User Agent
     client_ua = request.headers.get('User-Agent')
     return jsonify(process_data(data['challan'], client_ua, data['company_id']))
 
