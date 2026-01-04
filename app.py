@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, render_template_string
 import requests
 import re
@@ -10,7 +9,7 @@ from urllib3.util.retry import Retry
 # --- CONFIGURATION ---
 app = Flask(__name__)
 
-# --- MNM SOFTWARE DESIGN (Original Glassmorphism UI) ---
+# --- MNM SOFTWARE DESIGN (Updated with Company Selection) ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="en">
@@ -70,17 +69,45 @@ HTML_TEMPLATE = """
         .brand-title { font-size: 26px; font-weight: 900; letter-spacing: -0.5px; }
         .brand-title span { background: var(--gradient-orange); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         .brand-subtitle { color: var(--text-secondary); font-size: 11px; letter-spacing: 2px; margin-top: 6px; font-weight: 600; text-transform: uppercase; }
+        
         .form-control-custom {
             width: 100%; padding: 18px; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
             border-radius: 16px; color: white; font-size: 11px; font-weight: 700; text-align: center; letter-spacing: 2px;
-            outline: none; transition: var(--transition-smooth); margin-bottom: 25px;
+            outline: none; transition: var(--transition-smooth); margin-bottom: 20px;
         }
         .form-control-custom:focus { border-color: var(--accent-orange); background: rgba(255, 122, 0, 0.05); box-shadow: 0 0 0 4px var(--accent-orange-glow); }
+        
+        /* --- NEW COMPANY SELECTOR STYLES --- */
+        .company-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 25px;
+        }
+        .company-option {
+            position: relative;
+        }
+        .company-option input {
+            position: absolute; opacity: 0; cursor: pointer;
+        }
+        .company-label {
+            display: flex; align-items: center; justify-content: center; padding: 12px 5px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color);
+            border-radius: 12px; font-size: 10px; font-weight: 600; text-align: center;
+            color: var(--text-secondary); cursor: pointer; transition: var(--transition-smooth);
+            text-transform: uppercase; height: 100%;
+        }
+        .company-option input:checked + .company-label {
+            background: rgba(255, 122, 0, 0.15); border-color: var(--accent-orange);
+            color: white; box-shadow: 0 0 15px rgba(255, 122, 0, 0.2);
+        }
+        .company-option input:hover + .company-label {
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
         .btn-action {
             width: 100%; padding: 16px; background: var(--gradient-orange); color: white; border: none; border-radius: 16px;
             font-weight: 700; font-size: 16px; cursor: pointer; transition: var(--transition-smooth); letter-spacing: 1px; text-transform: uppercase;
         }
         .btn-action:hover { transform: translateY(-3px); box-shadow: 0 10px 30px var(--accent-orange-glow); }
+        
         .result-box { display: none; margin-top: 30px; animation: slideUp 0.5s ease-out; }
         @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         .info-card { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 20px; }
@@ -128,6 +155,26 @@ HTML_TEMPLATE = """
                 <div class="input-group-custom">
                     <input type="number" inputmode="numeric" id="challanNo" class="form-control-custom" placeholder="ENTER CHALLAN NO" required autocomplete="off">
                 </div>
+
+                <div class="company-grid">
+                    <div class="company-option">
+                        <input type="radio" name="company" id="comp1" value="1">
+                        <label for="comp1" class="company-label">Cotton Club BD</label>
+                    </div>
+                    <div class="company-option">
+                        <input type="radio" name="company" id="comp2" value="2" checked>
+                        <label for="comp2" class="company-label">Cotton Clothing</label>
+                    </div>
+                    <div class="company-option">
+                        <input type="radio" name="company" id="comp4" value="4">
+                        <label for="comp4" class="company-label">Cotton Clout BD</label>
+                    </div>
+                    <div class="company-option">
+                        <input type="radio" name="company" id="comp3" value="3">
+                        <label for="comp3" class="company-label">Tropical Knitex</label>
+                    </div>
+                </div>
+
                 <button type="submit" class="btn-action">Submit Data <i class="fa-solid fa-arrow-right ms-2"></i></button>
             </form>
             <div id="successBox" class="result-box">
@@ -161,7 +208,19 @@ HTML_TEMPLATE = """
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const val = input.value;
-            if(!val) return;
+            // Get selected company
+            const companyEl = document.querySelector('input[name="company"]:checked');
+            
+            if(!val) {
+                alert("Please Enter Challan No");
+                return;
+            }
+            if(!companyEl) {
+                alert("Please Select a Company");
+                return;
+            }
+
+            const companyId = companyEl.value;
             input.blur(); 
             loader.style.display = 'flex';
             successBox.style.display = 'none';
@@ -171,7 +230,10 @@ HTML_TEMPLATE = """
                 const req = await fetch('/process', {
                     method: 'POST', 
                     headers: {'Content-Type': 'application/json'}, 
-                    body: JSON.stringify({challan: val})
+                    body: JSON.stringify({
+                        challan: val,
+                        company_id: companyId  // Sending the selected ID
+                    })
                 });
                 const res = await req.json();
                 loader.style.display = 'none';
@@ -205,7 +267,7 @@ HTML_TEMPLATE = """
 """
 
 # --- BACKEND LOGIC ---
-def process_data(user_input, client_ua):
+def process_data(user_input, client_ua, company_id):
     base_url = "http://180.92.235.190:8022/erp"
     
     # User-Agent comes from Client
@@ -233,11 +295,9 @@ def process_data(user_input, client_ua):
             session.get(f"{base_url}/includes/common_functions_for_js.php?data=724_7_406&action=create_menu_session", headers=headers_menu)
         except: pass
 
-        # 3. Logic Setup
-        cbo_logic = '1'
-        if user_input.startswith('9'): cbo_logic = '4'
-        elif user_input.startswith('3'): cbo_logic = '2'
-
+        # 3. Logic Setup (UPDATED: Direct Assignment from Frontend)
+        cbo_logic = str(company_id) # Using the manually selected company ID
+        
         ctrl_url = f"{base_url}/production/requires/bundle_wise_cutting_delevar_to_input_controller.php"
         headers_ajax = headers_common.copy()
         headers_ajax['X-Requested-With'] = 'XMLHttpRequest'
@@ -252,30 +312,22 @@ def process_data(user_input, client_ua):
         res_pop = session.post(ctrl_url, params={'data': sys_id, 'action': 'populate_data_from_challan_popup'}, data={'rndval': int(time.time()*1000)}, headers=headers_common)
         
         # 🔴 🔴 SUPER STRICT EXTRACTOR 🔴 🔴
-        # This regex handles: .val('0'), .val("0"), .val(0), .val(''), .val("")
         def get_val(id_name, text):
-            # Regex: Finds ID name -> allows text until .val( -> captures content inside brackets
             pattern = re.escape(id_name) + r".*?\.val\(\s*['\"]?([^'\")]+)['\"]?\s*\)"
             m = re.search(pattern, text)
             if m:
                 val = m.group(1).strip()
-                return val if val else '0' # Empty string becomes '0'
-            return '0' # Not found becomes '0'
+                return val if val else '0' 
+            return '0' 
 
-        # =========================================================================
-        # 🔥 FINAL STRICT VALIDATION 🔥
-        # =========================================================================
-        
         source = get_val("cbo_source", res_pop.text)
         emb_company = get_val("cbo_emb_company", res_pop.text)
         line = get_val("cbo_line_no", res_pop.text)
         location = get_val("cbo_location", res_pop.text)
         floor = get_val("cbo_floor", res_pop.text)
 
-        # STRICT FORBIDDEN LIST:
-        # Blocks: '0', '00', '', 'undefined', 'null'
+        # Validation
         forbidden = ['0', '00', '', 'undefined', 'null']
-
         missing_fields = []
         if source in forbidden: missing_fields.append("Source")
         if emb_company in forbidden: missing_fields.append("Emb Company")
@@ -283,12 +335,7 @@ def process_data(user_input, client_ua):
         if location in forbidden: missing_fields.append("Location")
         
         if missing_fields:
-            # THIS RETURNS ERROR AND STOPS EXECUTION
-            return {
-                "status": "error", 
-                "message": f"⚠️ Missing/Zero: {', '.join(missing_fields)}"
-            }
-        # =========================================================================
+            return {"status": "error", "message": f"⚠️ Missing/Zero: {', '.join(missing_fields)}"}
 
         # Bundles Extraction
         res_bun = session.get(ctrl_url, params={'data': sys_id, 'action': 'bundle_nos'}, headers=headers_ajax)
@@ -382,24 +429,13 @@ def index():
 @app.route('/process', methods=['POST'])
 def process():
     data = request.json
-    if not data or 'challan' not in data: return jsonify({"status": "error", "message": "No Data"})
+    if not data or 'challan' not in data or 'company_id' not in data:
+        return jsonify({"status": "error", "message": "Missing Data"})
     
     # Capture Dynamic User Agent
     client_ua = request.headers.get('User-Agent')
-    return jsonify(process_data(data['challan'], client_ua))
+    return jsonify(process_data(data['challan'], client_ua, data['company_id']))
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
-
-
-
-
-
-
-
-
-
-
-
-
 
