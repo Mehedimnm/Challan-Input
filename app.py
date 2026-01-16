@@ -392,7 +392,14 @@ def process_data(user_input, client_ua, company_id):
         # 5. Save Payload
         bd_zone = timezone(timedelta(hours=6))
         now_bd = datetime.now(bd_zone)
-        fmt_date = now_bd.strftime("%d-%b-%Y")
+        
+        # যদি আজ শুক্রবার (weekday() == 4) হয়, তাহলে গতকালের তারিখ ব্যবহার করো
+        if now_bd.weekday() == 4:  # শুক্রবার = 4 (Monday=0, Friday=4)
+            save_date = now_bd - timedelta(days=1)  # গতকালের তারিখ (বৃহস্পতিবার)
+        else:
+            save_date = now_bd  # অন্যান্য দিনে আজকের তারিখ
+        
+        fmt_date = save_date.strftime("%d-%b-%Y")
         curr_time = now_bd.strftime("%H:%M")
         
         payload = {
@@ -460,4 +467,3 @@ def process():
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
-
